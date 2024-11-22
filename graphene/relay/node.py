@@ -9,7 +9,11 @@ def is_node(objecttype):
     """
     Check if the given objecttype has Node as an interface
     """
-    pass
+    if not isclass(objecttype):
+        return False
+    if not issubclass(objecttype, ObjectType):
+        return False
+    return Node in objecttype._meta.interfaces
 
 class GlobalID(Field):
 
@@ -42,3 +46,8 @@ class AbstractNode(Interface):
 
 class Node(AbstractNode):
     """An object with an ID"""
+
+    @classmethod
+    def Field(cls, *args, **kwargs):
+        """Create a NodeField for this Node class."""
+        return NodeField(cls, *args, **kwargs)
