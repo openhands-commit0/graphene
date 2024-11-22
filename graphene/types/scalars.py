@@ -1,8 +1,38 @@
-from typing import Any
+from typing import Any, Optional, Union
 from graphql import Undefined
 from graphql.language.ast import BooleanValueNode, FloatValueNode, IntValueNode, StringValueNode
 from .base import BaseOptions, BaseType
 from .unmountedtype import UnmountedType
+
+MAX_INT = 2147483647
+MIN_INT = -2147483648
+
+def coerce_int(value: Any) -> Optional[int]:
+    """Convert a value to an integer if possible."""
+    if value is None or value is Undefined:
+        return None
+    try:
+        num = int(value)
+        if num > MAX_INT or num < MIN_INT:
+            return None
+        return num
+    except (TypeError, ValueError):
+        return None
+
+def coerce_float(value: Any) -> Optional[float]:
+    """Convert a value to a float if possible."""
+    if value is None or value is Undefined:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+def coerce_string(value: Any) -> Optional[str]:
+    """Convert a value to a string if possible."""
+    if value is None or value is Undefined:
+        return None
+    return str(value)
 
 class ScalarOptions(BaseOptions):
     pass
@@ -30,9 +60,7 @@ class Scalar(UnmountedType, BaseType):
         This function is called when the unmounted type (Scalar instance)
         is mounted (as a Field, InputField or Argument)
         """
-        pass
-MAX_INT = 2147483647
-MIN_INT = -2147483648
+        return cls
 
 class Int(Scalar):
     """
@@ -44,6 +72,12 @@ class Int(Scalar):
     serialize = coerce_int
     parse_value = coerce_int
 
+    @staticmethod
+    def parse_literal(ast):
+        if isinstance(ast, IntValueNode):
+            return coerce_int(ast.value)
+        return None
+
 class BigInt(Scalar):
     """
     The `BigInt` scalar type represents non-fractional whole numeric values.
@@ -52,6 +86,12 @@ class BigInt(Scalar):
     """
     serialize = coerce_int
     parse_value = coerce_int
+
+    @staticmethod
+    def parse_literal(ast):
+        if isinstance(ast, IntValueNode):
+            return coerce_int(ast.value)
+        return None
 
 class Float(Scalar):
     """
@@ -62,6 +102,12 @@ class Float(Scalar):
     serialize = coerce_float
     parse_value = coerce_float
 
+    @staticmethod
+    def parse_literal(ast):
+        if isinstance(ast, (IntValueNode, FloatValueNode)):
+            return coerce_float(ast.value)
+        return None
+
 class String(Scalar):
     """
     The `String` scalar type represents textual data, represented as UTF-8
@@ -71,12 +117,24 @@ class String(Scalar):
     serialize = coerce_string
     parse_value = coerce_string
 
+    @staticmethod
+    def parse_literal(ast):
+        if isinstance(ast, StringValueNode):
+            return ast.value
+        return None
+
 class Boolean(Scalar):
     """
     The `Boolean` scalar type represents `true` or `false`.
     """
     serialize = bool
     parse_value = bool
+
+    @staticmethod
+    def parse_literal(ast):
+        if isinstance(ast, BooleanValueNode):
+            return ast.value
+        return None
 
 class ID(Scalar):
     """
@@ -88,3 +146,9 @@ class ID(Scalar):
     """
     serialize = str
     parse_value = str
+
+    @staticmethod
+    def parse_literal(ast):
+        if isinstance(ast, (StringValueNode, IntValueNode)):
+            return str(ast.value)
+        return None
