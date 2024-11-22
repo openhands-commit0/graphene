@@ -16,8 +16,25 @@ from .scalars import ID, Boolean, Float, Int, Scalar, String
 from .structures import List, NonNull
 from .union import Union
 from .utils import get_field_as
+
 introspection_query = get_introspection_query()
 IntrospectionSchema = introspection_types['__Schema']
+
+def is_graphene_type(type_):
+    """Check if the given type is a Graphene type."""
+    if isinstance(type_, (GrapheneGraphQLType, str)):
+        return True
+    if inspect.isclass(type_) and issubclass(type_, (ObjectType, InputObjectType, Scalar, Interface, Union, Enum)):
+        return True
+    return False
+
+def assert_valid_root_type(type_):
+    """Assert that the given type is a valid root type."""
+    if type_ is None:
+        return
+    is_valid = inspect.isclass(type_) and issubclass(type_, ObjectType)
+    if not is_valid:
+        raise Exception(f'Type "{type_}" is not a valid root type. Expected a subclass of ObjectType.')
 
 class TypeMap(dict):
 
@@ -38,7 +55,12 @@ class TypeMap(dict):
 
     def get_function_for_type(self, graphene_type, func_name, name, default_value):
         """Gets a resolve or subscribe function for a given ObjectType"""
-        pass
+        if not hasattr(graphene_type, func_name):
+            return default_value
+        func = getattr(graphene_type, func_name)
+        if func is None:
+            return default_value
+        return func
 
 class Schema:
     """Schema Definition.
@@ -108,18 +130,27 @@ class Schema:
         Returns:
             :obj:`ExecutionResult` containing any data and errors for the operation.
         """
-        pass
+        kwargs = normalize_execute_kwargs(kwargs)
+        return graphql_sync(self.graphql_schema, *args, **kwargs)
 
     async def execute_async(self, *args, **kwargs):
         """Execute a GraphQL query on the schema asynchronously.
         Same as `execute`, but uses `graphql` instead of `graphql_sync`.
         """
-        pass
+        kwargs = normalize_execute_kwargs(kwargs)
+        return await graphql(self.graphql_schema, *args, **kwargs)
 
     async def subscribe(self, query, *args, **kwargs):
         """Execute a GraphQL subscription on the schema asynchronously."""
-        pass
+        kwargs = normalize_execute_kwargs(kwargs)
+        return await subscribe(self.graphql_schema, query, *args, **kwargs)
 
 def normalize_execute_kwargs(kwargs):
     """Replace alias names in keyword arguments for graphql()"""
-    pass
+    if kwargs.get('root') is not None and not kwargs.get('root_value'):
+        kwargs['root_value'] = kwargs.pop('root')
+    if kwargs.get('context') is not None and not kwargs.get('context_value'):
+        kwargs['context_value'] = kwargs.pop('context')
+    if kwargs.get('variables') is not None and not kwargs.get('variable_values'):
+        kwargs['variable_values'] = kwargs.pop('variables')
+    return kwargs
