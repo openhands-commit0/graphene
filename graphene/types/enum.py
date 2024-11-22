@@ -4,6 +4,16 @@ from .base import BaseOptions, BaseType
 from .unmountedtype import UnmountedType
 EnumType = type(PyEnum)
 
+def eq_enum(self, other):
+    """Compare two enum values for equality."""
+    if isinstance(other, self.__class__):
+        return self.value == other.value
+    return self.value == other
+
+def hash_enum(self):
+    """Hash an enum value."""
+    return hash(self.value)
+
 class EnumOptions(BaseOptions):
     enum = None
     deprecation_reason = None
@@ -75,4 +85,15 @@ class Enum(UnmountedType, BaseType, metaclass=EnumMeta):
         This function is called when the unmounted type (Enum instance)
         is mounted (as a Field, InputField or Argument)
         """
-        pass
+        return cls
+
+    @classmethod
+    def from_enum(cls, enum, description=None, deprecation_reason=None):
+        """Create a Graphene Enum from a Python enum.py Enum."""
+        meta_dict = {
+            'enum': enum,
+            'description': description,
+            'deprecation_reason': deprecation_reason
+        }
+        meta_class = type('Meta', (object,), meta_dict)
+        return type(meta_class.enum.__name__, (cls,), {'Meta': meta_class})
