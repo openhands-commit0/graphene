@@ -63,6 +63,11 @@ class Scalar(UnmountedType, BaseType):
         """
         return cls
 
+    def mount(self, _as=None):
+        """Mount the scalar type as a Field."""
+        from .field import Field
+        return Field(self.get_type(), *self.args, **self.kwargs)
+
 class Int(Scalar):
     """
     The `Int` scalar type represents non-fractional signed whole numeric
