@@ -18,6 +18,11 @@ class BaseOptions:
 
     def __repr__(self):
         return f'<{self.__class__.__name__} name={repr(self.name)}>'
+
+    def freeze(self):
+        """Freeze the options to prevent further modifications."""
+        self._frozen = True
+
 BaseTypeMeta = SubclassWithMeta_Meta
 
 class BaseType(SubclassWithMeta):
