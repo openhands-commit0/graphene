@@ -20,7 +20,12 @@ class Structure(UnmountedType):
         This function is called when the unmounted type (List or NonNull instance)
         is mounted (as a Field, InputField or Argument)
         """
-        pass
+        return get_type(self._of_type)
+
+    def mount(self, _as=None):
+        """Mount the structure type as a Field."""
+        from .field import Field
+        return Field(self.get_type(), *self.args, **self.kwargs)
 
 class List(Structure):
     """
