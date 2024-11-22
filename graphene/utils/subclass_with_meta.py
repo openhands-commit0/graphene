@@ -30,7 +30,7 @@ class SubclassWithMeta(metaclass=SubclassWithMeta_Meta):
         options = dict(meta_options, **_meta_props)
         abstract = options.pop('abstract', False)
         if abstract:
-            assert not options, f'Abstract types can only contain the abstract attribute. Received: abstract, {', '.join(options)}'
+            assert not options, 'Abstract types can only contain the abstract attribute. Received: abstract, ' + ', '.join(options)
         else:
             super_class = super(cls, cls)
             if hasattr(super_class, '__init_subclass_with_meta__'):
