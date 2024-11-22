@@ -10,3 +10,7 @@ def dict_or_attr_resolver(attname, default_value, root, info, **args):
     return getattr(root, attname, default_value)
 
 default_resolver = dict_or_attr_resolver
+
+def get_default_resolver():
+    """Get the default resolver function."""
+    return default_resolver
