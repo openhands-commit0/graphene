@@ -35,7 +35,8 @@ def coerce_string(value: Any) -> Optional[str]:
     return str(value)
 
 class ScalarOptions(BaseOptions):
-    pass
+    def freeze(self):
+        self._frozen = True
 
 class Scalar(UnmountedType, BaseType):
     """
