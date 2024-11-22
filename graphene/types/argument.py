@@ -5,6 +5,28 @@ from .mountedtype import MountedType
 from .structures import NonNull
 from .utils import get_type
 
+def to_arguments(args, extra_args=None):
+    """
+    Convert arguments to a list of Argument instances.
+    """
+    from .unmountedtype import UnmountedType
+
+    extra_args = extra_args or {}
+    arguments = []
+
+    for name, value in chain(args.items(), extra_args.items()):
+        if isinstance(value, Argument):
+            argument = value
+            if argument.name is None:
+                argument.name = name
+        elif isinstance(value, (UnmountedType, Dynamic)):
+            argument = Argument(value, name=name)
+        else:
+            raise ValueError(f'Unknown argument "{name}" of type {type(value)}')
+        arguments.append(argument)
+
+    return sorted(arguments, key=lambda x: x.creation_counter)
+
 class Argument(MountedType):
     """
     Makes an Argument available on a Field in the GraphQL schema.
