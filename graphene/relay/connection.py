@@ -18,9 +18,26 @@ class PageInfo(ObjectType):
     start_cursor = String(name='startCursor', description='When paginating backwards, the cursor to continue.')
     end_cursor = String(name='endCursor', description='When paginating forwards, the cursor to continue.')
 
+def get_edge_class(connection_class, node_class, base_name, strict_types=False):
+    """Create an Edge class for a Connection."""
+    class EdgeBase(ObjectType):
+        class Meta:
+            name = f'{base_name}Edge'
+            description = 'A Relay edge containing a `{base_name}` and its cursor.'
+
+        node = Field(NonNull(node_class) if strict_types else node_class, description='The item at the end of the edge.')
+        cursor = String(required=True, description='A cursor for use in pagination.')
+
+    return type(EdgeBase.__name__, (EdgeBase,), {})
+
 def page_info_adapter(startCursor, endCursor, hasPreviousPage, hasNextPage):
     """Adapter for creating PageInfo instances"""
-    pass
+    return PageInfo(
+        start_cursor=startCursor,
+        end_cursor=endCursor,
+        has_previous_page=hasPreviousPage,
+        has_next_page=hasNextPage
+    )
 
 class ConnectionOptions(ObjectTypeOptions):
     node = None
@@ -53,7 +70,7 @@ class Connection(ObjectType):
 
 def connection_adapter(cls, edges, pageInfo):
     """Adapter for creating Connection instances"""
-    pass
+    return cls(edges=edges, page_info=pageInfo)
 
 class IterableConnectionField(Field):
 
